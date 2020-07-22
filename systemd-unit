@@ -1,0 +1,12 @@
+[Unit]
+Description=Download and install crio binaries and configurations.
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/curl --fail --retry 5 --retry-delay 3 --silent --show-error  -o /usr/local/sbin/crio-config.sh https://raw.githubusercontent.com/harche/crio-fcos-config/master/test.sh
+ExecStartPre=/bin/chmod 544 /usr/local/sbin/crio-config.sh
+ExecStart=/usr/local/sbin/crio-config.sh
+
+[Install]
+WantedBy=multi-user.target
