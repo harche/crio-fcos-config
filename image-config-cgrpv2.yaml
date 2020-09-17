@@ -1,0 +1,5 @@
+images:
+  fedora:
+    image_family: fedora-coreos-stable
+    project: fedora-coreos-cloud 
+    metadata: "user-data</home/harshal/Projects/crio-upstream-ci/crio-fcos-config/crio_cgrpv2.ign"
