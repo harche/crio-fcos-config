@@ -29,13 +29,20 @@ systemd:
         ExecStartPre=/usr/bin/tar -zxvf /usr/local/crio.tar.gz -C /usr/local/
         ExecStartPre=/usr/bin/bash -c '/usr/bin/mv -f /usr/local/crio-* /usr/local/crio-latest'
         ExecStartPre=/usr/bin/bash -c '/usr/bin/mv -f /usr/local/crio-latest/bin/* /usr/local/bin/'
+        ExecStartPre=/usr/bin/mkdir -p /var/lib/kubelet
+        ExecStartPre=/usr/bin/chcon -R -u system_u -r object_r -t var_lib_t /var/lib/kubelet
+        ExecStartPre=/usr/bin/mount /tmp /tmp -o remount,exec,suid
+        ExecStartPre=/usr/bin/chcon -u system_u -r object_r -t container_runtime_exec_t /usr/local/bin/crio /usr/local/bin/crio-status /usr/local/bin/runc /usr/local/bin/crun
+        ExecStartPre=/usr/bin/chcon -u system_u -r object_r -t bin_t /usr/local/bin/conmon /usr/local/bin/crictl /usr/local/bin/pinns
         ExecStartPre=/usr/bin/mkdir -p /opt/cni/bin
         ExecStartPre=/usr/bin/bash -c '/usr/bin/mv -f /usr/local/crio-latest/cni-plugins/* /opt/cni/bin/'
+        ExecStartPre=/usr/bin/chcon -R -u system_u -r object_r -t bin_t /opt/cni/bin/
         ExecStartPre=/usr/bin/mv -f /usr/local/crio-latest/contrib/10-crio-bridge.conf /etc/cni/net.d/.
         ExecStartPre=/usr/bin/bash -c '/usr/bin/mv -f /usr/local/crio-latest/etc/* /etc/'
         ExecStartPre=/usr/bin/mkdir -p /etc/crio/crio.conf.d
         ExecStartPre=/usr/bin/bash -c 'echo -e "[crio.runtime]\n  default_runtime = \\\"crun\\\"\n[crio.runtime.runtimes]\n  [crio.runtime.runtimes.crun]\n    runtime_path=\\\"/usr/local/bin/crun\\\"" > /etc/crio/crio.conf.d/20-crun.conf'
-        ExecStartPre=/usr/bin/bash -c 'echo -e "[crio.runtime]\n  [crio.runtime.runtimes]\n  [crio.runtime.runtimes.preconfigured-handler]\n    runtime_path=\\\"/usr/local/bin/runc\\\"" > /etc/crio/crio.conf.d/10-crun.conf'
+        ExecStartPre=/usr/bin/bash -c 'echo -e "[crio.runtime]\n  [crio.runtime.runtimes]\n  [crio.runtime.runtimes.test-handler]\n    runtime_path=\\\"/usr/local/bin/runc\\\"" > /etc/crio/crio.conf.d/10-crun.conf'
+        ExecStartPre=/usr/bin/chcon -R -u system_u -r object_r -t container_config_t /etc/crio /etc/crio.conf /etc/crio-umount.conf
         ExecStartPre=/usr/bin/mv -f /usr/local/crio-latest/contrib/crio.service /etc/systemd/system/ 
         ExecStartPre=/usr/bin/systemctl enable crio.service
         ExecStartPre=/usr/sbin/restorecon /etc/systemd/system/crio.service
