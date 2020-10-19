@@ -11,7 +11,13 @@ systemd:
         
         [Service]
         Type=oneshot
-        ExecStartPre=/usr/bin/bash -c '/usr/bin/curl --fail --retry 5 --retry-delay 3 --silent --show-error -o /usr/local/crio.tar.gz  https://storage.googleapis.com/k8s-conform-cri-o/artifacts/crio-$(git ls-remote https://github.com/cri-o/cri-o master | cut -c1-9).tar.gz -o crio.tar.gz'
+        ExecStartPre=/usr/bin/bash -c '/usr/sbin/iptables -C INPUT -w -p TCP -j ACCEPT || iptables -A INPUT -w -p TCP -j ACCEPT'
+        ExecStartPre=/usr/bin/bash -c '/usr/sbin/iptables -C INPUT -w -p UDP -j ACCEPT || iptables -A INPUT -w -p UDP -j ACCEPT'
+        ExecStartPre=/usr/bin/bash -c '/usr/sbin/iptables -C INPUT -w -p ICMP -j ACCEPT || iptables -A INPUT -w -p ICMP -j ACCEPT'
+        ExecStartPre=/usr/bin/bash -c '/usr/sbin/iptables -C FORWARD -w -p TCP -j ACCEPT || iptables -A FORWARD -w -p TCP -j ACCEPT'
+        ExecStartPre=/usr/bin/bash -c '/usr/sbin/iptables -C FORWARD -w -p UDP -j ACCEPT || iptables -A FORWARD -w -p UDP -j ACCEPT'
+        ExecStartPre=/usr/bin/bash -c '/usr/sbin/iptables -C FORWARD -w -p ICMP -j ACCEPT || iptables -A FORWARD -w -p ICMP -j ACCEPT'
+        ExecStartPre=/usr/bin/bash -c '/usr/bin/curl --fail --retry 5 --retry-delay 3 --silent --show-error -o /usr/local/crio.tar.gz  https://storage.googleapis.com/k8s-conform-cri-o/artifacts/crio-$(git ls-remote https://github.com/cri-o/cri-o release-1.20 | cut -c1-9).tar.gz -o crio.tar.gz'
         ExecStartPre=/usr/bin/tar -zxvf /usr/local/crio.tar.gz -C /usr/local/
         ExecStartPre=/usr/bin/bash -c '/usr/bin/mv -f /usr/local/crio-* /usr/local/crio-latest'
         ExecStartPre=/usr/bin/bash -c '/usr/bin/mv -f /usr/local/crio-latest/bin/* /usr/local/bin/'
@@ -23,11 +29,13 @@ systemd:
         ExecStartPre=/usr/bin/mkdir -p /opt/cni/bin
         ExecStartPre=/usr/bin/bash -c '/usr/bin/mv -f /usr/local/crio-latest/cni-plugins/* /opt/cni/bin/'
         ExecStartPre=/usr/bin/chcon -R -u system_u -r object_r -t bin_t /opt/cni/bin/
+        ExecStartPre=/usr/bin/rm -f  /etc/cni/net.d/87-podman-bridge.conflist
         ExecStartPre=/usr/bin/mv -f /usr/local/crio-latest/contrib/10-crio-bridge.conf /etc/cni/net.d/.
         ExecStartPre=/usr/bin/bash -c '/usr/bin/mv -f /usr/local/crio-latest/etc/* /etc/'
         ExecStartPre=/usr/bin/mkdir -p /etc/crio/crio.conf.d
+        ExecStartPre=/usr/bin/bash -c '/usr/bin/mv -f /etc/crio.conf /etc/crio/crio.conf'
         ExecStartPre=/usr/bin/bash -c 'echo -e "[crio.runtime]\n  [crio.runtime.runtimes]\n  [crio.runtime.runtimes.test-handler]\n    runtime_path=\\\"/usr/local/bin/crun\\\"" > /etc/crio/crio.conf.d/10-crun.conf'
-        ExecStartPre=/usr/bin/chcon -R -u system_u -r object_r -t container_config_t /etc/crio /etc/crio.conf /etc/crio-umount.conf
+        ExecStartPre=/usr/bin/chcon -R -u system_u -r object_r -t container_config_t /etc/crio /etc/crio/crio.conf /etc/crio-umount.conf
         ExecStartPre=/usr/bin/mv -f /usr/local/crio-latest/contrib/crio.service /etc/systemd/system/ 
         ExecStartPre=/usr/bin/systemctl enable crio.service
         ExecStartPre=/usr/sbin/restorecon /etc/systemd/system/crio.service
